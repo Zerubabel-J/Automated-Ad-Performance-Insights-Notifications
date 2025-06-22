@@ -513,8 +513,8 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.3,
       "position": [
-        980,
-        520
+        560,
+        340
       ],
       "id": "9330ef69-2c74-4804-ba33-df9457cc38a8",
       "name": "AI Error Alert",
@@ -531,8 +531,8 @@
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
       "position": [
-        380,
-        640
+        360,
+        740
       ],
       "id": "9ff5a11f-6d11-4654-856e-0236e5c6836b",
       "name": "Error Handler"
@@ -555,7 +555,7 @@
       "typeVersion": 2.3,
       "position": [
         620,
-        640
+        740
       ],
       "id": "aa1547a5-e2ca-49d1-b4b3-7626d78e05ba",
       "name": "System Error Alert",
@@ -640,7 +640,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        920,
+        960,
         20
       ],
       "id": "f8d3779c-007a-410c-96e7-92d0d32013e3",
@@ -657,7 +657,7 @@
       "typeVersion": 1,
       "position": [
         280,
-        540
+        660
       ],
       "id": "56c2ef0e-6a7d-4d00-80c1-c2d067bc8a78",
       "name": "Error Handling"
@@ -694,7 +694,8 @@
         140
       ],
       "id": "e5c9cd98-ba38-49e2-a33b-97d2a28b31a1",
-      "name": "If"
+      "name": "If",
+      "executeOnce": true
     },
     {
       "parameters": {
@@ -738,6 +739,20 @@
           "name": "Gemini(PaLM) Api "
         }
       }
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        760,
+        340
+      ],
+      "id": "83a18f8e-f666-46c4-b43f-7dd70e44f769",
+      "name": "Wait",
+      "webhookId": "ce0fa9a7-b1c4-4904-9384-85f57aeabdfa"
     }
   ],
   "pinData": {},
@@ -868,7 +883,13 @@
     },
     "AI Error Alert": {
       "main": [
-        []
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "If": {
@@ -904,13 +925,24 @@
           }
         ]
       ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5c5e3248-1a63-45c9-86c6-17930fffbc9f",
+  "versionId": "c3ba4d81-ace2-41f2-849f-2f3db093a58e",
   "meta": {
     "instanceId": "8e58eb7146c9984eb591b78514f724ac4bb75c7185b48e47fa000476c831d362"
   },
