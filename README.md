@@ -5,6 +5,8 @@
 
 A production-ready, enterprise-level automation system that automatically analyzes Google Ads performance data, provides AI-powered insights, and sends intelligent notifications based on performance trends. Built with comprehensive error handling and real-world scenario management.
 
+![image](https://github.com/user-attachments/assets/709935d9-98c3-4127-965c-07b23986ce03)
+
 ## ✨ Key Features
 
 ### **Core Functionality**
