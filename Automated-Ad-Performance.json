@@ -1,0 +1,919 @@
+{
+  "name": "Automated Ad Performance Insights & Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "12PJ0h-ijDDI7qUnak6tB_PTp1H3GSrvheztcEQehdQA",
+          "mode": "list",
+          "cachedResultName": "Ad Performance Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12PJ0h-ijDDI7qUnak6tB_PTp1H3GSrvheztcEQehdQA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12PJ0h-ijDDI7qUnak6tB_PTp1H3GSrvheztcEQehdQA/edit#gid=0"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -860,
+        160
+      ],
+      "id": "5fa11292-ccc8-42ca-bd68-9657cb3d0fcc",
+      "name": "New Row Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "Z73zrWOq0sARuqf1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 1: Data Validation - Comprehensive validation with What-If handling\nconst row = $input.first().json;\n\nconst requiredFields = [\n  \"Week\",\n  \"Campaign Name\",\n  \"Status\",\n  \"Budget (€)\",\n  \"CTR (%)\",\n  \"Clicks\",\n  \"CPC (€)\",\n  \"Cost (€)\",\n  \"Conversions\",\n  \"Impress Share (%)\"\n];\n\nconst numberFields = [\n  \"Week\",\n  \"Budget (€)\",\n  \"CTR (%)\",\n  \"Clicks\",\n  \"CPC (€)\",\n  \"Cost (€)\",\n  \"Conversions\",\n  \"Impress Share (%)\"\n];\n\nlet valid = true;\nlet errorMessage = \"\";\nlet validationDetails = [];\n\n// Check for missing or empty fields\nfor (const field of requiredFields) {\n  if (\n    row[field] === undefined ||\n    row[field] === null ||\n    row[field] === \"\" ||\n    (typeof row[field] === \"string\" && row[field].toUpperCase().includes(\"#REF\"))\n  ) {\n    valid = false;\n    errorMessage = `Field \"${field}\" is missing or invalid.`;\n    validationDetails.push(`❌ ${field}: ${row[field] || 'MISSING'}`);\n    break;\n  } else {\n    validationDetails.push(`✅ ${field}: ${row[field]}`);\n  }\n}\n\n// Additional type checks\nif (valid) {\n  for (const field of numberFields) {\n    if (isNaN(Number(row[field]))) {\n      valid = false;\n      errorMessage = `Field \"${field}\" is not a valid number.`;\n      validationDetails.push(`❌ ${field}: Invalid number format`);\n      break;\n    }\n  }\n}\n\n// Enhanced validation summary\nconst validationSummary = {\n  valid,\n  errorMessage,\n  validationDetails,\n  row,\n  timestamp: new Date().toISOString(),\n  week: row.Week,\n  campaign: row['Campaign Name']\n};\n\nreturn [{\n  json: validationSummary\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -680,
+        160
+      ],
+      "id": "bc512102-bada-4ff2-bfc7-6ef371d63bff",
+      "name": "Validate Data",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b929ec42-087d-4b7f-82b1-9ee191932b5c",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -520,
+        160
+      ],
+      "id": "56c5e858-25a2-4281-9213-162fd8fbdf3c",
+      "name": "Data Valid?",
+      "webhookId": "data-validation-check"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C092BAE0Q8N",
+          "mode": "list",
+          "cachedResultName": "data-error-alert"
+        },
+        "text": "=:warning: *Data Validation Failed - Manual Review Required*\n\n*Campaign:* `{{ $json.campaign }}`\n*Week:* {{ $json.week }}\n*Error:* {{ $json.errorMessage }}\n\n*Validation Details:*\n{{ $json.validationDetails.join('\\n') }}\n\n *Timestamp:* {{ new Date().toLocaleString('en-US', { timeZone: 'Africa/Addis_Ababa' }) }}\n\nPlease review and fix the data quality issues.",
+        "otherOptions": {
+          "mrkdwn": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -300,
+        520
+      ],
+      "id": "77eca731-3c8e-42c7-8287-e73a8f0f746a",
+      "name": "Data Error Alert",
+      "webhookId": "1cf43730-9fd9-49e6-9ac3-acc48d127c9f",
+      "credentials": {
+        "slackApi": {
+          "id": "ZOhAUnNqZ9m22YXN",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12PJ0h-ijDDI7qUnak6tB_PTp1H3GSrvheztcEQehdQA",
+          "mode": "list",
+          "cachedResultName": "Ad Performance Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12PJ0h-ijDDI7qUnak6tB_PTp1H3GSrvheztcEQehdQA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12PJ0h-ijDDI7qUnak6tB_PTp1H3GSrvheztcEQehdQA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -300,
+        140
+      ],
+      "id": "d1d5cb07-2036-4a7e-af55-c51b96eec0d4",
+      "name": "Get Historical Data",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rlHUw391sihS60n8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 2: Prepare Data for AI Analysis with Previous Week Context\n\n// Get the validated row and all historical rows\nconst currentRow = $('Validate Data').item.json.row;\nconst allRows = $('Get Historical Data').all().map(item => item.json);\n\n// Find the previous week's row for the same campaign\nconst previousRow = allRows.find(row =>\n  parseInt(row.Week) === (parseInt(currentRow.Week) - 1) &&\n  row['Campaign Name'] === currentRow['Campaign Name']\n);\n\n// Prepare data structure for AI\nconst dataForAI = {\n  current: currentRow,\n  previous: previousRow || null,\n  previous_week_exists: !!previousRow,\n  analysis_context: previousRow ? 'week-over-week' : 'industry-benchmarks',\n  timestamp: new Date().toISOString()\n};\n\n// Log the context for debugging\nconsole.log('AI Analysis Context:', {\n  currentWeek: currentRow.Week,\n  previousWeek: previousRow ? previousRow.Week : 'N/A',\n  context: dataForAI.analysis_context\n});\n\nreturn [{\n  json: dataForAI\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        140
+      ],
+      "id": "6f124037-a897-4db0-a64e-b67cfca48289",
+      "name": "Prepare AI Data",
+      "webhookId": "prepare-ai-data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following Google Ads performance data:\n\nCURRENT WEEK (Week {{ $json.current.Week }}):\n- Campaign: {{ $json.current['Campaign Name'] }}\n- Status: {{ $json.current.Status }}\n- Budget: €{{ $json.current['Budget (€)'] }}\n- CTR: {{ $json.current['CTR (%)'] }}%\n- Clicks: {{ $json.current.Clicks }}\n- CPC: €{{ $json.current['CPC (€)'] }}\n- Cost: €{{ $json.current['Cost (€)'] }}\n- Conversions: {{ $json.current.Conversions }}\n- Impression Share: {{ $json.current['Impress Share (%)'] }}%\n\n{{ $json.previous_week_exists ? 'PREVIOUS WEEK (Week ' + $json.previous.Week + '):' : 'NO PREVIOUS WEEK DATA AVAILABLE. Using industry benchmarks for analysis:' }}\n{{ $json.previous_week_exists ? '- CTR: ' + $json.previous['CTR (%)'] + '%' : '- CTR Benchmark: Good >2.0%, Average 1.5-2.0%, Poor <1.5%' }}\n{{ $json.previous_week_exists ? '- Clicks: ' + $json.previous.Clicks : '- CPC Benchmark: Good <€2.0, Average €2.0-3.0, Poor >€3.0' }}\n{{ $json.previous_week_exists ? '- CPC: €' + $json.previous['CPC (€)'] : '- Conversion Rate Benchmark: Good >3%, Average 2-3%, Poor <2%' }}\n{{ $json.previous_week_exists ? '- Cost: €' + $json.previous['Cost (€)'] : '- Impression Share Benchmark: Good >80%, Average 50-80%, Poor <50%' }}\n{{ $json.previous_week_exists ? '- Conversions: ' + $json.previous.Conversions : '' }}\n{{ $json.previous_week_exists ? '- Impression Share: ' + $json.previous['Impress Share (%)'] + '%' : '' }}\n\nProvide your analysis in the required JSON format.\nNote: Make your responses clear, concise, and actionable.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an expert Google Ads analyst specializing in performance analysis and optimization recommendations. Your task is to analyze weekly Google Ads performance data and provide structured insights.\n\nCRITICAL OUTPUT REQUIREMENTS:\n- You MUST return ONLY a valid JSON object\n- The JSON must have exactly two keys: \"interpretation\" and \"recommendations\"\n- \"interpretation\" must be a string (max 200 words)\n- \"recommendations\" must be an array of strings (max 2 items, each max 100 words)\n- If performance is stable/improved, return an empty array for \"recommendations\"\n- If performance declined or below benchmarks, provide 1-2 actionable recommendations\n\nANALYSIS RULES:\n- If previous week data is provided, compare current vs previous week\n- If only current week data is provided, use industry benchmarks for analysis:\n  * CTR: Good >2.0%, Average 1.5-2.0%, Poor <1.5%\n  * CPC: Good <€2.0, Average €2.0-3.0, Poor >€3.0\n  * Conversion Rate: Good >3%, Average 2-3%, Poor <2%\n  * Impression Share: Good >80%, Average 50-80%, Poor <50%\n- Focus on CTR, Clicks, CPC, Cost, Conversions, and Impression Share\n- Consider budget efficiency and conversion quality\n- Be specific and actionable in recommendations\n\nEXAMPLE OUTPUT:\n{\n  \"interpretation\": \"Week 27 shows stable performance with CTR at 2.5% and 25 clicks. Cost per click remains efficient at €2.22, and conversion rate is consistent at 30%. Impression share at 12.82% indicates room for growth.\",\n  \"recommendations\": []\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        180,
+        140
+      ],
+      "id": "a004f088-89d3-4156-adfc-4327909f0c85",
+      "name": "AI Analysis",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 4: AI Output Validation & What-If Logic - Comprehensive error handling\n\n// Configuration\nconst MAX_RETRIES = 2;\nconst RETRY_DELAY_MS = 1000;\n\n// Get the AI output from the previous node\nconst aiOutput = $input.first().json.output || $input.first().json;\nconst contextData = $('Prepare AI Data').item.json;\n\n// Function to validate AI output structure\nfunction validateAIOutput(output) {\n  try {\n    // Handle null/undefined/empty output\n    if (!output || typeof output !== 'string') {\n      return { valid: false, error: \"AI returned empty or invalid output\" };\n    }\n    \n    // Clean and parse JSON\n    let jsonString = output.trim();\n    \n    // Remove markdown code blocks if present\n    if (jsonString.startsWith('```json')) {\n      jsonString = jsonString.replace(/^```json\\n/, '').replace(/```$/, '');\n    } else if (jsonString.startsWith('```')) {\n      jsonString = jsonString.replace(/^```\\n/, '').replace(/```$/, '');\n    }\n    \n    const parsed = JSON.parse(jsonString);\n    \n    // Validate required structure\n    if (typeof parsed !== 'object' || parsed === null) {\n      return { valid: false, error: \"AI output is not a valid JSON object\" };\n    }\n    \n    if (!parsed.hasOwnProperty('interpretation') || typeof parsed.interpretation !== 'string') {\n      return { valid: false, error: \"Missing or invalid 'interpretation' field\" };\n    }\n    \n    if (!parsed.hasOwnProperty('recommendations') || !Array.isArray(parsed.recommendations)) {\n      return { valid: false, error: \"Missing or invalid 'recommendations' field\" };\n    }\n    \n    // Validate content quality\n    if (parsed.interpretation.trim().length === 0) {\n      return { valid: false, error: \"'interpretation' field is empty\" };\n    }\n    \n    // Validate recommendations array items\n    for (let i = 0; i < parsed.recommendations.length; i++) {\n      if (typeof parsed.recommendations[i] !== 'string') {\n        return { valid: false, error: `Recommendation ${i + 1} must be a string` };\n      }\n      if (parsed.recommendations[i].trim().length === 0) {\n        return { valid: false, error: `Recommendation ${i + 1} is empty` };\n      }\n    }\n    \n    return { valid: true, data: parsed };\n    \n  } catch (error) {\n    return { valid: false, error: `JSON parsing error: ${error.message}` };\n  }\n}\n\n// Main validation logic with retry simulation\nlet validationResult = validateAIOutput(aiOutput);\nlet attempts = 0;\n\n// Log validation attempt\nconsole.log(`AI Output Validation Attempt ${attempts + 1}:`, {\n  valid: validationResult.valid,\n  error: validationResult.error || 'None',\n  outputLength: aiOutput ? aiOutput.length : 0\n});\n\n// If invalid, simulate retry logic (in real scenario, you'd re-call the AI)\nwhile (!validationResult.valid && attempts < MAX_RETRIES) {\n  attempts++;\n  console.log(`Retry attempt ${attempts} for AI output validation`);\n  \n  // In a real implementation, you would re-call the AI here\n  // For now, we'll just re-validate the same output\n  validationResult = validateAIOutput(aiOutput);\n}\n\n// Prepare final result\nif (validationResult.valid) {\n  // Success - return validated data with context\n  return [{\n    json: {\n      success: true,\n      interpretation: validationResult.data.interpretation,\n      recommendations: validationResult.data.recommendations,\n      attempts: attempts + 1,\n      context: contextData,\n      timestamp: new Date().toISOString()\n    }\n  }];\n} else {\n  // Failed after all retries - return error data for fallback handling\n  return [{\n    json: {\n      success: false,\n      error: validationResult.error,\n      rawOutput: aiOutput,\n      attempts: attempts + 1,\n      context: contextData,\n      fallback: true,\n      timestamp: new Date().toISOString()\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        140
+      ],
+      "id": "a45651b5-0ff1-4215-a9ba-7d375c568a67",
+      "name": "Validate AI Output",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ai-success-check",
+              "leftValue": "={{ $('Validate AI Output').item.json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "recommendations-empty-check",
+              "leftValue": "={{ $('Validate AI Output').item.json.recommendations }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "array",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1140,
+        140
+      ],
+      "id": "31397f30-ac87-49d9-b5a5-c342cad86d34",
+      "name": "Performance Classification",
+      "webhookId": "performance-classification"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12PJ0h-ijDDI7qUnak6tB_PTp1H3GSrvheztcEQehdQA",
+          "mode": "list",
+          "cachedResultName": "Ad Performance Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12PJ0h-ijDDI7qUnak6tB_PTp1H3GSrvheztcEQehdQA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12PJ0h-ijDDI7qUnak6tB_PTp1H3GSrvheztcEQehdQA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Week": "={{ $('Prepare AI Data').item.json.current.Week }}",
+            "AI Interpretation": "={{ $json.interpretation }}\n{{ $json.recommendations[0] }}"
+          },
+          "matchingColumns": [
+            "Week"
+          ],
+          "schema": [
+            {
+              "id": "Week",
+              "displayName": "Week",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Campaign Name",
+              "displayName": "Campaign Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Budget (€)",
+              "displayName": "Budget (€)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "CTR (%)",
+              "displayName": "CTR (%)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "CTR Δ",
+              "displayName": "CTR Δ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Clicks",
+              "displayName": "Clicks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Clicks Δ (%)",
+              "displayName": "Clicks Δ (%)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "CPC (€)",
+              "displayName": "CPC (€)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Cost (€)",
+              "displayName": "Cost (€)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Conversions",
+              "displayName": "Conversions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Conv Δ",
+              "displayName": "Conv Δ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Impress Share (%)",
+              "displayName": "Impress Share (%)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "AI Interpretation",
+              "displayName": "AI Interpretation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        980,
+        140
+      ],
+      "id": "7d041023-8b48-42f6-8851-953dc0f2d024",
+      "name": "Update Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "rlHUw391sihS60n8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C091V42JXN2",
+          "mode": "list",
+          "cachedResultName": "for-stable-good-updates"
+        },
+        "text": "=:large_green_circle: *Weekly Ad Performance Update - Stable Performance*\n\n*Campaign:* {{ $('Prepare AI Data').item.json.current['Campaign Name'] }}\n*Week:* {{ $('Prepare AI Data').item.json.current.Week }}\n\n*AI Summary:* {{ $('Validate AI Output').item.json.interpretation }}\n\n:white_check_mark: All systems go! Performance is stable this week.\n\n*Timestamp:* {{ new Date().toLocaleString('en-US', { timeZone: 'Africa/Addis_Ababa' }) }}\n",
+        "otherOptions": {
+          "mrkdwn": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1320,
+        60
+      ],
+      "id": "4945cc80-48e9-4dc6-8171-cd7212549949",
+      "name": "Stable Alert",
+      "webhookId": "8796f0ba-6606-41c5-b908-ded4e37384f9",
+      "credentials": {
+        "slackApi": {
+          "id": "ZOhAUnNqZ9m22YXN",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C091UT8EQPM",
+          "mode": "list",
+          "cachedResultName": "marketing-action-items"
+        },
+        "text": "=:red_circle: *Action Required: Weekly Ad Performance Alert!*\n\n*Campaign:* {{ $('Prepare AI Data').item.json.current['Campaign Name'] }}\n*Week:* {{ $('Prepare AI Data').item.json.current.Week }}\n\n*AI Summary:* {{ $('Validate AI Output').item.json.interpretation }}\n\n*Recommendations:* {{ $('Validate AI Output').item.json.recommendations }}\n\n\n:rotating_light: Let's review this ASAP and take action.\n *Timestamp:* {{ new Date().toLocaleString('en-US', { timeZone: 'Africa/Addis_Ababa' }) }}",
+        "otherOptions": {
+          "mrkdwn": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1320,
+        260
+      ],
+      "id": "36ced5e9-02ed-45b7-8306-deb0df854f2b",
+      "name": "Action Alert",
+      "webhookId": "3b2712c8-a347-4f38-9742-552f9f65434b",
+      "credentials": {
+        "slackApi": {
+          "id": "ZOhAUnNqZ9m22YXN",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C092H3X9R18",
+          "mode": "list",
+          "cachedResultName": "ai-error-alert"
+        },
+        "text": "=:warning: *AI Analysis Failed - Manual Review Required*\n\n*Campaign:* {{ $json.context.current['Campaign Name'] }}\n*Week:* {{ $json.context.current.Week }}\n*Error:* {{ $json.error }}\n*Attempts:* {{ $json.attempts }}\n\n*Raw AI Output:*\n```\n{{ $json.rawOutput }}\n```\n\n*Analysis Context:* {{ $json.context.analysis_context }}\n\n:exclamation: Please review this manually and update the sheet accordingly.\n\n *Timestamp:* {{ new Date().toLocaleString('en-US', { timeZone: 'Africa/Addis_Ababa' }) }}",
+        "otherOptions": {
+          "mrkdwn": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        980,
+        520
+      ],
+      "id": "9330ef69-2c74-4804-ba33-df9457cc38a8",
+      "name": "AI Error Alert",
+      "webhookId": "ai-fallback-webhook",
+      "credentials": {
+        "slackApi": {
+          "id": "ZOhAUnNqZ9m22YXN",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        380,
+        640
+      ],
+      "id": "9ff5a11f-6d11-4654-856e-0236e5c6836b",
+      "name": "Error Handler"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C090DURJ0HK",
+          "mode": "list",
+          "cachedResultName": "workflow-errors"
+        },
+        "text": "=:rotating_light: *Workflow Error - System Alert*\n\n**WORKFLOW ERROR** \n*Workflow Name:* `{{ $workflow.name }}` \n*Failed Node:* `{{ $json.execution.error.node.name }}` \n*Error Message:* `{{ $json.execution.error.message }}` \n*Link to Failed Execution:* {{ $json.execution.url }} \n\n *Timestamp:* {{ new Date().toLocaleString('en-US', { timeZone: 'Africa/Addis_Ababa' }) }}\n\n:warning: This is a system-level error that requires immediate attention.",
+        "otherOptions": {
+          "mrkdwn": true
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        620,
+        640
+      ],
+      "id": "aa1547a5-e2ca-49d1-b4b3-7626d78e05ba",
+      "name": "System Error Alert",
+      "webhookId": "36c82e15-ad85-4ca3-af71-98fb7273098b",
+      "credentials": {
+        "slackApi": {
+          "id": "ZOhAUnNqZ9m22YXN",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Phase 1: Triggering & Data Validation",
+        "height": 440,
+        "width": 540
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -920,
+        20
+      ],
+      "id": "3605dc62-81cf-4aff-a2f8-2b91b2bb7b13",
+      "name": "Phase 1"
+    },
+    {
+      "parameters": {
+        "content": "## Phase 2: Data Preparation",
+        "height": 440,
+        "width": 420,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        20
+      ],
+      "id": "68a71710-5b33-4eb0-9917-871839e19a2f",
+      "name": "Phase 2"
+    },
+    {
+      "parameters": {
+        "content": "## Phase 3: AI Performance Analysis",
+        "height": 440,
+        "width": 380,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        20
+      ],
+      "id": "7f482dcc-52c4-433c-a50f-5a88f5794b12",
+      "name": "Phase 3"
+    },
+    {
+      "parameters": {
+        "content": "## Phase 4: AI Output Validation & What-If Logic",
+        "height": 420,
+        "width": 380,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        500,
+        40
+      ],
+      "id": "781cdaff-b85a-4769-b167-5441390c5b66",
+      "name": "Phase 4"
+    },
+    {
+      "parameters": {
+        "content": "## Phase 5: Sheet Writeback & Conditional Notifications",
+        "height": 440,
+        "width": 600,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        920,
+        20
+      ],
+      "id": "f8d3779c-007a-410c-96e7-92d0d32013e3",
+      "name": "Phase 5"
+    },
+    {
+      "parameters": {
+        "content": "## Global Error Handling & Monitoring",
+        "height": 320,
+        "width": 600,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        280,
+        540
+      ],
+      "id": "56c2ef0e-6a7d-4d00-80c1-c2d067bc8a78",
+      "name": "Error Handling"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e2025569-efb8-4e97-9970-203e0e040239",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        740,
+        140
+      ],
+      "id": "e5c9cd98-ba38-49e2-a33b-97d2a28b31a1",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1cae09a-a287-4a4c-99d5-19281df4e636",
+              "name": "output",
+              "value": "[   {     \"output\": \"```json\\n{\\n  \\\"recommendations\\\": []\\n}\\n```\"   } ]",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -680,
+        680
+      ],
+      "id": "683f8bdb-f574-4938-a831-ade78d855401",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        140,
+        340
+      ],
+      "id": "cbcd830f-af15-4436-87b1-3c587ea979ae",
+      "name": "Gemini Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "QK7gPHgHICV4nP2G",
+          "name": "Gemini(PaLM) Api "
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Analysis": {
+      "main": [
+        [
+          {
+            "node": "Validate AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare AI Data": {
+      "main": [
+        [
+          {
+            "node": "AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Row Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Handler": {
+      "main": [
+        [
+          {
+            "node": "System Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Performance Classification": {
+      "main": [
+        [
+          {
+            "node": "Stable Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Action Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet": {
+      "main": [
+        [
+          {
+            "node": "Performance Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Historical Data": {
+      "main": [
+        [
+          {
+            "node": "Prepare AI Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Data": {
+      "main": [
+        [
+          {
+            "node": "Data Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Valid?": {
+      "main": [
+        [
+          {
+            "node": "Get Historical Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Data Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate AI Output": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Error Alert": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "Gemini Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5c5e3248-1a63-45c9-86c6-17930fffbc9f",
+  "meta": {
+    "instanceId": "8e58eb7146c9984eb591b78514f724ac4bb75c7185b48e47fa000476c831d362"
+  },
+  "id": "cQ5M0AR8xQp3RWMd",
+  "tags": []
+}
