@@ -1,27 +1,27 @@
 
 # 🤖 Automated Ad Performance Insights & Notifications
 
-## 📋 Overview
+## Overview
 
 A production-ready, enterprise-level automation system that automatically analyzes Google Ads performance data, provides AI-powered insights, and sends intelligent notifications based on performance trends. Built with comprehensive error handling and real-world scenario management.
 
 ## ✨ Key Features
 
-### 🎯 **Core Functionality**
+### **Core Functionality**
 - **Automatic Triggering**: Responds to new data in Google Sheets
 - **AI-Powered Analysis**: Uses Google Gemini AI for intelligent performance insights
 - **Smart Notifications**: Conditional Slack alerts based on performance status
 - **Data Validation**: Comprehensive input validation with error handling
 - **Historical Context**: Week-over-week comparison or industry benchmarks
 
-### 🛡️ **Robustness & Reliability**
+###  **Robustness & Reliability**
 - **What-If Logic**: Handles all edge cases gracefully
 - **Retry Mechanisms**: Automatic retry on AI failures
 - **Fallback Systems**: Manual review channels for unexpected scenarios
 - **Error Monitoring**: Comprehensive error tracking and alerting
 - **Data Quality Checks**: Validates input data before processing
 
-### 📊 **Performance Analysis**
+### **Performance Analysis**
 - **Week-over-Week Comparison**: When previous week data is available
 - **Industry Benchmarks**: When historical data is missing
 - **Structured Insights**: Consistent JSON output format
@@ -106,7 +106,7 @@ A production-ready, enterprise-level automation system that automatically analyz
 🟢 Weekly Ad Performance Update - Stable Performance
 
 Campaign: Campaign 1
-Week: 27
+Week: 1
 Analysis Context: week-over-week
 
 AI Summary: Week 27 shows stable performance with CTR at 2.5%...
@@ -119,7 +119,7 @@ AI Summary: Week 27 shows stable performance with CTR at 2.5%...
 🔴 Action Required: Weekly Ad Performance Alert!
 
 Campaign: Campaign 1
-Week: 27
+Week: 1
 Analysis Context: industry-benchmarks
 
 AI Summary: CTR at 1.2% is below industry average...
@@ -156,7 +156,7 @@ Recommendations:
 - ✅ Node failures → Comprehensive error logging
 - ✅ Network issues → Retry mechanisms
 
-## 📈 Performance Metrics
+## Performance Metrics
 
 ### **Industry Benchmarks Used**
 - **CTR**: Good >2.0%, Average 1.5-2.0%, Poor <1.5%
@@ -168,14 +168,6 @@ Recommendations:
 1. **Week-over-Week**: When previous week data is available
 2. **Industry Benchmarks**: When historical data is missing
 3. **Isolated Analysis**: For first-time campaigns
-
-## 🔒 Security & Compliance
-
-### **Data Handling**
-- No sensitive data stored in logs
-- Secure API credential management
-- Audit trail for all workflow executions
-- Timestamp tracking for debugging
 
 ### **Access Control**
 - Google Sheets integration with OAuth2
@@ -252,9 +244,6 @@ Recommendations:
 - **Scalability**: Handles multiple campaigns and accounts
 - **Reliability**: Robust error handling ensures continuous operation
 
-## 📄 License & Usage
-
-This workflow is designed for internal business use. Please ensure compliance with your organization's data handling policies and API usage terms.
 
 ---
 
