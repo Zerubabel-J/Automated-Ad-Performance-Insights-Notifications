@@ -699,29 +699,6 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "b1cae09a-a287-4a4c-99d5-19281df4e636",
-              "name": "output",
-              "value": "[   {     \"output\": \"```json\\n{\\n  \\\"recommendations\\\": []\\n}\\n```\"   } ]",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -680,
-        680
-      ],
-      "id": "683f8bdb-f574-4938-a831-ade78d855401",
-      "name": "Edit Fields"
-    },
-    {
-      "parameters": {
         "modelName": "models/gemini-2.0-flash",
         "options": {}
       },
@@ -910,11 +887,6 @@
         ]
       ]
     },
-    "Edit Fields": {
-      "main": [
-        []
-      ]
-    },
     "Gemini Model": {
       "ai_languageModel": [
         [
@@ -942,7 +914,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "c3ba4d81-ace2-41f2-849f-2f3db093a58e",
+  "versionId": "5126507c-c544-4106-a5c0-63c29478f932",
   "meta": {
     "instanceId": "8e58eb7146c9984eb591b78514f724ac4bb75c7185b48e47fa000476c831d362"
   },
