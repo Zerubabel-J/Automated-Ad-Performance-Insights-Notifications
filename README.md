@@ -1,5 +1,5 @@
 
-# 🤖 Automated Ad Performance Insights & Notifications
+# Automated Ad Performance Insights & Notifications
 
 ## Overview
 
@@ -7,7 +7,7 @@ A production-ready, enterprise-level automation system that automatically analyz
 
 ![image](https://github.com/user-attachments/assets/709935d9-98c3-4127-965c-07b23986ce03)
 
-## ✨ Key Features
+## Key Features
 
 ### **Core Functionality**
 - **Automatic Triggering**: Responds to new data in Google Sheets
